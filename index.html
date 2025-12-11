@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy Birthday Surprise</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <!-- Load handwritten font for P5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Global Styles and Fonts */
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.5s;
+            /* STRICT NO SCROLL ON BODY */
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+        }
+
+        .font-handwritten {
+            font-family: 'Charm', cursive;
+        }
+
+        /* P2: Candle Flame Flicker */
+        @keyframes flicker {
+            0%, 100% { opacity: 1; transform: scaleY(1); }
+            50% { opacity: 0.9; transform: scaleY(0.98); }
+            25%, 75% { opacity: 0.95; transform: scaleY(1.02); }
+        }
+
+        /* P2: Smoke Effect */
+        @keyframes smoke {
+            0% { transform: translateY(0) scale(0.5); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        }
+
+        /* P3: Heart Float Up */
+        @keyframes heartFloat {
+            0% { 
+                transform: translateY(0) rotate(0deg); 
+                opacity: 0.7; 
+            }
+            100% { 
+                /* Ensures the particle travels up */
+                transform: translateY(-120vh) rotate(15deg); 
+                opacity: 0; 
+            }
+        }
+        
+        /* P3: Counter Box Pulse */
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(255, 100, 150, 0.5); }
+            50% { border-color: rgba(255, 100, 150, 1); }
+        }
+        .pulse-border-animation {
+            animation: pulse-border 2s infinite alternate;
+        }
+        
+        /* P3: Counter Text Glow */
+        .counter-text-glow {
+            text-shadow: 0 0 5px rgba(255, 100, 150, 0.5), 0 0 15px rgba(255, 100, 150, 0.3);
+        }
+
+        /* Custom Tailwind Classes for Animation */
+        .flame-flicker {
+            animation: flicker 0.5s infinite alternate;
+        }
+
+        .smoke-effect {
+            animation: smoke 1.5s forwards;
+            opacity: 0;
+        }
+
+        /* Custom Scrollbar for Letter Page */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #f9a8d4; /* pink-300 */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: #fef3c7; /* yellow-50 */
+        }
+
+    </style>
+</head>
+<body class="bg-gray-900">
+
+    <!-- The main application container -->
+    <div id="app" class="h-full w-full"></div>
+
+    <script>
+        // --- CRITICAL CONFIGURATION SECTION ---
+        const CONFIG = {
+            TARGET_NAME: 'Saadiya',
+            PASSWORD_KEY: '091125',
+            // BIRTH_DATE_TIME_MS: 2008-03-01T00:00:00Z (March is 2). Use UTC for reliability.
+            BIRTH_DATE_TIME_MS: Date.UTC(2008, 2, 1, 0, 0, 0),
+            BIRTH_TIME_DESCRIPTION: 'the earth has been luckier since 03/01/2008',
+            // Placeholder Song URL (Must be a direct link to an MP3/OGG for <audio>)
+            SONG_URL: 'https://cdn.jsdelivr.net/gh/dev-xero/hosting/music/lofi-dream.mp3', 
+            SONG_TITLE: 'Lofi Dream (Placeholder)',
+            // Images for the Montage (Replace with actual image URLs)
+            MONTAGE_IMAGES: [
+                { url: 'https://placehold.co/800x600/1e293b/cbd5e1?text=Moment+1', caption: 'A wonderful memory...' },
+                { url: 'https://placehold.co/800x600/334155/e2e8f0?text=Moment+2', caption: 'Laughter and light.' },
+                { url: 'https://placehold.co/800x600/475569/f1f5f9?text=Moment+3', caption: 'Future adventures await!' },
+                { url: 'https://placehold.co/800x600/64748b/f8fafc?text=Moment+4', caption: 'The best of times.' },
+            ],
+        };
+
+        // --- GLOBAL STATE AND ROUTING ---
+        const app = document.getElementById('app');
+
+        // Function to navigate between pages (simulates routing)
+        function navigate(newPage) {
+            window.location.hash = newPage;
+            renderPage(newPage);
+            // No need to scrollTo 0,0 because body is overflow hidden, but keeping for safety
+            window.scrollTo(0, 0); 
+        }
+
+        // --- PAGE RENDERING FUNCTIONS ---
+
+        // P1: PASSWORD GATE
+        function renderPasswordGate() {
+            app.className = 'flex items-center justify-center h-full w-full bg-gray-900 transition-colors duration-700';
+            app.innerHTML = `
+                <div id="gate-card" class="bg-gray-800 p-8 sm:p-12 rounded-2xl shadow-2xl w-full max-w-sm text-center transform transition-transform duration-500 hover:scale-[1.02]">
+                    <h1 class="text-4xl font-extrabold text-indigo-400 mb-6 tracking-tight">
+                        A Secret Awaits
+                    </h1>
+                    <p class="text-gray-400 mb-8">
+                        Enter the secret key to unlock your surprise.
+                    </p>
+                    <form id="password-form" class="space-y-6">
+                        <input
+                            type="password"
+                            id="password-input"
+                            placeholder="The Key..."
+                            class="w-full px-5 py-3 text-lg text-white bg-gray-700 border-2 border-indigo-500 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:outline-none placeholder-gray-500 transition duration-300"
+                            maxlength="10"
+                            autofocus
+                        />
+                        <button
+                            type="submit"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+                        >
+                            Unlock
+                        </button>
+                    </form>
+                    <p id="error-message" class="mt-4 text-sm font-medium text-red-400 hidden"></p>
+                </div>
+            `;
+
+            const form = document.getElementById('password-form');
+            const input = document.getElementById('password-input');
+            const errorElement = document.getElementById('error-message');
+            const card = document.getElementById('gate-card');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const password = input.value;
+                if (password === CONFIG.PASSWORD_KEY) {
+                    errorElement.classList.add('hidden');
+                    // Apply success transition
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(-50px)';
+                    setTimeout(() => {
+                        navigate('candle');
+                    }, 700);
+                } else {
+                    errorElement.textContent = 'Wrong Key. Try again.';
+                    errorElement.classList.remove('hidden');
+                    input.value = '';
+                    setTimeout(() => errorElement.classList.add('hidden'), 2000);
+                }
+            });
+        }
+
+        // P2: INTERACTIVE CANDLE
+        function renderCandlePage() {
+            app.className = 'flex flex-col items-center justify-center h-full w-full bg-gray-900 text-white p-4';
+            const BLOW_TIME = 5;
+            let countdown = BLOW_TIME;
+            let isLit = true;
+
+            const CandleAndCakeHTML = () => `
+                <div class="flex flex-col items-center scale-90 sm:scale-100">
+                    <!-- Candle Flame and Smoke -->
+                    <div class="relative h-20 w-8 flex justify-center z-20">
+                        <div id="candle-flame" class="flame-flicker absolute top-0 w-3 h-8 bg-yellow-400 rounded-t-full shadow-[0_0_15px_5px_rgba(255,255,100,0.8)] transition-opacity duration-500">
+                            <div class="absolute inset-x-0 bottom-0 h-4 bg-orange-600 rounded-t-full opacity-80"></div>
+                        </div>
+                        <div id="candle-smoke" class="absolute top-0 w-12 h-12 bg-gray-300 rounded-full opacity-0"></div>
+                        <!-- Candle Stick -->
+                        <div class="w-3 h-16 bg-white shadow-inner rounded-t-sm absolute bottom-0 z-10 border-t-2 border-red-500"></div>
+                    </div>
+                    
+                    <!-- Cake layers -->
+                    <div class="w-64 h-10 bg-pink-400 rounded-t-full relative z-10 border-b-2 border-pink-600 shadow-xl">
+                        <div class="absolute inset-0 bg-white opacity-80 rounded-t-full transform scale-y-[0.3] top-0"></div>
+                        <div class="absolute top-[-10px] inset-x-0 h-4 bg-purple-500 rounded-t-full z-20"></div>
+                    </div>
+                    <div class="w-72 h-16 bg-indigo-500 rounded-b-3xl relative">
+                        <div class="absolute top-0 inset-x-0 h-2 bg-indigo-400 rounded-t-3xl opacity-70"></div>
+                    </div>
+                </div>
+            `;
+
+            app.innerHTML = `
+                <h1 id="candle-text" class="text-4xl sm:text-6xl font-extrabold mb-12 text-center transition-colors duration-500 text-gray-300">
+                    Blow in (${BLOW_TIME})
+                </h1>
+                ${CandleAndCakeHTML()}
+                <button
+                    id="next-candle-btn"
+                    class="mt-16 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-extrabold py-3 px-10 rounded-full shadow-2xl transition duration-300 transform hover:scale-110 active:scale-95 text-xl hidden"
+                >
+                    Next Surprise →
+                </button>
+            `;
+
+            const textElement = document.getElementById('candle-text');
+            const flameElement = document.getElementById('candle-flame');
+            const smokeElement = document.getElementById('candle-smoke');
+            const nextButton = document.getElementById('next-candle-btn');
+
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    textElement.textContent = `Blow in (${countdown})`;
+                } else if (countdown === 0 && isLit) {
+                    clearInterval(timer);
+                    isLit = false;
+                    
+                    // Candle Shut-off logic
+                    flameElement.style.opacity = '0';
+                    textElement.textContent = `Happy Birthday, ${CONFIG.TARGET_NAME}!`;
+                    textElement.classList.remove('text-gray-300');
+                    textElement.classList.add('text-yellow-400');
+
+                    // Start smoke animation
+                    smokeElement.classList.add('smoke-effect');
+                    
+                    // Show next button
+                    setTimeout(() => {
+                        nextButton.classList.remove('hidden');
+                    }, 1500); // Wait for smoke animation to finish
+                }
+            }, 1000);
+
+            nextButton.addEventListener('click', () => navigate('time-on-earth'));
+        }
+
+        // P3: TIME ON EARTH COUNTER & HEART PARTICLE SYSTEM
+        let heartInterval;
+        let counterInterval;
+        const HEART_EMOJIS = ['💖', '❤️', '✨', '🌟'];
+
+        function renderTimeOnEarthPage() {
+            // FIXED: Use h-full and overflow-hidden to prevent body scroll
+            app.className = 'relative flex flex-col items-center justify-center h-full w-full bg-gray-900 text-white overflow-hidden p-4';
+            app.innerHTML = `
+                <div id="heart-container" class="absolute inset-0 pointer-events-none h-full w-full overflow-hidden"></div>
+                <div class="z-10 text-center space-y-4 sm:space-y-6 flex flex-col items-center justify-center h-full w-full">
+                    <p class="text-lg sm:text-2xl text-pink-300 font-light max-w-2xl mx-auto tracking-wide px-4">
+                        ${CONFIG.BIRTH_TIME_DESCRIPTION}
+                    </p>
+                    <div id="counter-box" class="p-4 sm:p-6 bg-gray-800/80 backdrop-blur-md rounded-3xl shadow-2xl transition-all duration-300 border-4 border-transparent pulse-border-animation">
+                        <span id="days-counter" class="flex flex-col items-center">
+                            <!-- FIXED: Use 'vmin' so text fits screen regardless of aspect ratio -->
+                            <span id="counter-int" class="text-[15vmin] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-pink-600 leading-none counter-text-glow">
+                                0
+                            </span>
+                            <span id="counter-dec" class="text-[5vmin] text-pink-300 font-mono mt-[-1.5vmin] counter-text-glow">
+                                .000
+                            </span>
+                        </span>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-400 mt-2 tracking-widest">
+                            DAYS
+                        </p>
+                    </div>
+                    <div class="pt-4 sm:pt-6 h-16 sm:h-20 z-50"> <!-- Added z-50 to ensure button sits above everything -->
+                        <button
+                            id="next-time-btn"
+                            class="bg-red-500 hover:bg-red-600 text-white font-extrabold py-3 px-8 sm:px-10 rounded-full shadow-2xl transition duration-300 transform hover:scale-110 active:scale-95 text-lg sm:text-xl hidden"
+                        >
+                            Next Chapter →
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const intElement = document.getElementById('counter-int');
+            const decElement = document.getElementById('counter-dec');
+            const heartContainer = document.getElementById('heart-container');
+            const nextButton = document.getElementById('next-time-btn');
+            
+            const MS_PER_DAY = 1000 * 60 * 60 * 24;
+            const startTime = Date.now();
+            let buttonShown = false;
+
+            // 1. Millisecond Counter Effect (in DAYS)
+            const updateCounter = () => {
+                const now = Date.now();
+                const diffMs = now - CONFIG.BIRTH_DATE_TIME_MS;
+                const totalDays = diffMs / MS_PER_DAY;
+                
+                const fixed = totalDays.toFixed(3);
+                const [integer, decimal] = fixed.split('.');
+                
+                // Add comma separation for readability
+                const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                
+                intElement.textContent = formattedInteger;
+                decElement.textContent = `.${decimal}`;
+
+                // Show next button after 5 seconds of running
+                if (now - startTime >= 5000 && !buttonShown) {
+                    nextButton.classList.remove('hidden');
+                    buttonShown = true;
+                }
+            };
+            
+            // Update every 10ms for a smooth animation effect
+            counterInterval = setInterval(updateCounter, 10); 
+
+            // 2. Heart Particle System Effect
+            let hearts = [];
+            const MAX_HEARTS = 150; 
+            const SPAWN_INTERVAL_MS = 100; 
+
+            const spawnHeart = () => {
+                // Garbage collect older hearts
+                if (hearts.length > MAX_HEARTS) {
+                    const oldestHeart = hearts.shift();
+                    oldestHeart.remove();
+                }
+
+                const heart = document.createElement('div');
+                const emoji = HEART_EMOJIS[Math.floor(Math.random() * HEART_EMOJIS.length)];
+                heart.textContent = emoji;
+                
+                const duration = 8 + Math.random() * 4;
+                const size = 1 + Math.random() * 1.5; // Slightly larger range
+                const delay = Math.random() * -10; 
+
+                heart.className = 'absolute opacity-0';
+                heart.style.left = `${Math.random() * 100}%`; 
+                // FIXED: Start from below the viewport
+                heart.style.bottom = `-50px`; 
+                heart.style.fontSize = `${size}rem`;
+                heart.style.animationName = 'heartFloat';
+                heart.style.animationDuration = `${duration}s`;
+                heart.style.animationTimingFunction = 'linear';
+                heart.style.animationIterationCount = 'infinite';
+                heart.style.animationDelay = `${delay}s`;
+
+                heartContainer.appendChild(heart);
+                hearts.push(heart);
+            };
+
+            heartInterval = setInterval(spawnHeart, SPAWN_INTERVAL_MS);
+
+            nextButton.addEventListener('click', () => {
+                clearInterval(counterInterval);
+                clearInterval(heartInterval);
+                navigate('montage');
+            });
+        }
+        
+        // P4: MONTAGE SLIDESHOW RECREATION
+        function renderMontagePage() {
+            app.className = 'flex flex-col items-center justify-center h-full w-full bg-gray-800 text-white p-4';
+            let currentIndex = 0;
+            const images = CONFIG.MONTAGE_IMAGES;
+
+            app.innerHTML = `
+                <div class="w-full max-w-4xl text-center flex flex-col h-full justify-center relative">
+                    <!-- Title with flexible margin -->
+                    <h1 class="text-3xl sm:text-5xl font-extrabold text-teal-400 mb-4 tracking-wide shrink-0">
+                        A Short Story
+                    </h1>
+                    
+                    <!-- Slideshow Container: Reduced max-height and used mx-auto to center -->
+                    <div id="slideshow-container" class="relative bg-gray-900 rounded-3xl shadow-2xl overflow-hidden aspect-video w-full max-h-[50vh] transition-all duration-700 ease-in-out shrink-0 mx-auto">
+                        ${images.map((img, index) => `
+                            <div 
+                                id="slide-${index}"
+                                class="absolute inset-0 transition-opacity duration-1000 ${index === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'}"
+                            >
+                                <img 
+                                    src="${img.url}" 
+                                    alt="Montage moment ${index + 1}" 
+                                    class="w-full h-full object-cover"
+                                    onerror="this.onerror=null; this.src='https://placehold.co/800x600/0f172a/94a3b8?text=Image+Unavailable';"
+                                />
+                                <div class="absolute inset-x-0 bottom-0 bg-black bg-opacity-50 p-2 sm:p-4">
+                                    <p class="text-sm sm:text-lg font-semibold text-white">
+                                        ${img.caption}
+                                    </p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Indicators -->
+                    <div id="indicators" class="flex justify-center space-x-2 mt-4 shrink-0">
+                        ${images.map((_, index) => `
+                            <div
+                                id="indicator-${index}"
+                                class="h-2 rounded-full transition-all duration-300 ${index === currentIndex ? 'w-8 bg-teal-400' : 'w-2 bg-gray-500 hover:bg-teal-300'}"
+                            />
+                        `).join('')}
+                    </div>
+
+                    <!-- Button Container with z-index and padding -->
+                    <div class="mt-6 sm:mt-8 shrink-0 pb-4 z-50"> 
+                        <button
+                            id="next-montage-btn"
+                            class="bg-teal-600 hover:bg-teal-700 text-white font-extrabold py-3 px-10 rounded-full shadow-2xl transition duration-300 transform hover:scale-105 active:scale-95 text-xl"
+                        >
+                            Final Page →
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const slides = images.map((_, index) => document.getElementById(`slide-${index}`));
+            const indicators = images.map((_, index) => document.getElementById(`indicator-${index}`));
+            const nextButton = document.getElementById('next-montage-btn');
+
+            const updateSlides = () => {
+                slides.forEach((slide, index) => {
+                    slide.className = `absolute inset-0 transition-opacity duration-1000 ${index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`;
+                });
+                indicators.forEach((indicator, index) => {
+                    indicator.className = `h-2 rounded-full transition-all duration-300 ${index === currentIndex ? 'w-8 bg-teal-400' : 'w-2 bg-gray-500 hover:bg-teal-300'}`;
+                });
+            };
+
+            const autoPlayTimer = setInterval(() => {
+                currentIndex = (currentIndex + 1) % images.length;
+                updateSlides();
+            }, 4000); // Change image every 4 seconds
+
+            nextButton.addEventListener('click', () => {
+                clearInterval(autoPlayTimer);
+                navigate('letter');
+            });
+        }
+
+        // P5: THE LETTER & SONG
+        function renderLetterPage() {
+            // Use flex column and restrict height to h-full
+            app.className = 'flex flex-col items-center justify-center h-full w-full bg-gray-100 p-4 sm:p-8';
+            const letterText = `
+    My Dearest ${CONFIG.TARGET_NAME},
+
+    I remember the very first time I saw you, and the world shifted on its axis. Every single day since then has been a gift, a chance to witness your incredible spirit, your infectious laughter, and the kindness you carry with you like a second skin. You have a way of making the mundane feel magical, and I cherish every moment we share.
+
+    This isn't just a letter; it's a small attempt to capture the immense love and admiration I feel for you. You are more than just a person in my life; you are the light that guides me, the quiet strength that inspires me, and the greatest adventure I've ever known. Never forget the incredible impact you have on the people around you.
+
+    I look back at all our milestones, big and small, and each one shines brighter because you were there. From late-night talks to crazy adventures, every memory with ${CONFIG.TARGET_NAME} is stored in a special place in my heart. You navigate life's challenges with such grace and resilience, qualities I deeply respect.
+
+    As you celebrate another year, I hope you feel surrounded by all the joy, peace, and happiness you bring to others. May this year be filled with new opportunities, fulfilling experiences, and moments that take your breath away. You deserve all the wonderful things life has to offer, and so much more.
+
+    Know that no matter what tomorrow brings, I will always be here, cheering you on, supporting your dreams, and loving you unconditionally. The future is bright, and I can't wait to see all the amazing things ${CONFIG.TARGET_NAME} will accomplish next.
+
+    Happy Birthday, my love.
+
+    With all my heart,
+  `;
+
+            app.innerHTML = `
+                <!-- Audio Element (Invisible) -->
+                <audio id="background-music" src="${CONFIG.SONG_URL}" loop preload="auto"></audio>
+
+                <h1 class="text-3xl sm:text-5xl font-extrabold text-gray-800 mb-4 sm:mb-8 text-center tracking-tight flex-shrink-0">
+                    A Letter to ${CONFIG.TARGET_NAME}
+                </h1>
+                
+                <!-- Parchment/Letter Container - Internal Scroll Only -->
+                <div class="w-full max-w-4xl bg-yellow-50 p-6 sm:p-12 rounded-3xl shadow-xl border-t-8 border-pink-300 transition-all duration-500 hover:shadow-2xl flex-1 overflow-hidden flex flex-col">
+                    <div class="overflow-y-auto pr-4 custom-scrollbar h-full">
+                        <pre 
+                            class="font-handwritten text-gray-800 text-lg whitespace-pre-wrap leading-relaxed"
+                            style="font-size: clamp(1.1rem, 2vw, 1.4rem);"
+                        >${letterText.trim()}</pre>
+                        <p class="font-handwritten text-gray-700 text-2xl mt-10 text-right pr-4">
+                            [Your Signature Placeholder]
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            const audio = document.getElementById('background-music');
+
+            let isPlaying = false;
+            let playAttempted = false;
+
+            const startPlayback = () => {
+                if (!isPlaying && audio) {
+                    audio.volume = 0.5; // Set volume to half
+                    audio.play()
+                        .then(() => {
+                            isPlaying = true;
+                        })
+                        .catch(error => {
+                            // If it still fails, usually due to interaction timing
+                            console.log("Autoplay blocked again. User interaction required.");
+                        });
+                }
+            };
+
+            // Attempt autoplay on page load
+            if (audio) {
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isPlaying = true;
+                        playAttempted = true;
+                    }).catch(error => {
+                        // Autoplay blocked:
+                        playAttempted = true;
+                        console.log("Autoplay prevented by browser.");
+                    });
+                }
+            }
+            
+            // Fallback strategy for tough browsers: try playing on any scroll/touch interaction
+            const handleInteraction = () => {
+                if (playAttempted && !isPlaying) {
+                    startPlayback();
+                }
+            };
+
+            // This is a common method to get around strict mobile autoplay policies
+            window.addEventListener('scroll', handleInteraction, { once: true });
+            window.addEventListener('click', handleInteraction, { once: true });
+            window.addEventListener('touchstart', handleInteraction, { once: true });
+        }
+
+
+        // --- MAIN ROUTER LOGIC ---
+
+        function renderPage(page) {
+            // Clear any previous intervals or listeners
+            if (counterInterval) clearInterval(counterInterval);
+            if (heartInterval) clearInterval(heartInterval);
+            
+            const music = document.getElementById('background-music');
+            if (music) {
+                music.pause();
+                music.currentTime = 0;
+            }
+
+            switch (page) {
+                case 'candle':
+                    renderCandlePage();
+                    break;
+                case 'time-on-earth':
+                    renderTimeOnEarthPage();
+                    break;
+                case 'montage':
+                    renderMontagePage();
+                    break;
+                case 'letter':
+                    renderLetterPage();
+                    break;
+                case 'gate':
+                default:
+                    renderPasswordGate();
+                    break;
+            }
+        }
+
+        // Initialize routing based on hash or default to 'gate'
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.substring(1) || 'gate';
+            renderPage(hash);
+        });
+
+        // Initial page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialHash = window.location.hash.substring(1) || 'gate';
+            renderPage(initialHash);
+        });
+    </script>
+</body>
+</html>
